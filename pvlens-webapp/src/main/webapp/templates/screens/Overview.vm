@@ -1,0 +1,223 @@
+#set($pageTitle = "Overview")
+
+<div class="dashboard">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="dashboard-title-section">
+            <h1 class="dashboard-title">PVLens Dashboard</h1>
+            <span class="dashboard-subtitle">Drug Safety Data Overview</span>
+        </div>
+    </div>
+
+    <!-- Stats Cards Row -->
+    <div class="stats-grid">
+        <!-- Substances Card -->
+        <div class="stat-card">
+            <div class="stat-header">
+                <svg class="stat-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/>
+                    <path d="M9 3v4"/>
+                    <path d="M15 3v4"/>
+                    <path d="M9 14h6"/>
+                    <path d="M9 18h6"/>
+                </svg>
+                <span>Total Substances</span>
+            </div>
+            <div class="stat-main">
+                <span class="stat-value">${stats.totalSubstances}</span>
+            </div>
+            <div class="stat-breakdown">
+                <div class="breakdown-item">
+                    <span class="breakdown-value">${stats.prescriptionDrugs}</span>
+                    <span class="breakdown-label">Prescription</span>
+                </div>
+                <div class="breakdown-item">
+                    <span class="breakdown-value">${stats.otcDrugs}</span>
+                    <span class="breakdown-label">OTC</span>
+                </div>
+            </div>
+            <a href="$link.setScreen('Substances')" class="stat-link">
+                View All Substances
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Adverse Events Card -->
+        <div class="stat-card">
+            <div class="stat-header">
+                <svg class="stat-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Adverse Events</span>
+            </div>
+            <div class="stat-main">
+                <span class="stat-value">${stats.totalAdverseEvents}</span>
+            </div>
+            <div class="stat-breakdown">
+                <div class="breakdown-item">
+                    <span class="breakdown-value">${stats.blackboxWarnings}</span>
+                    <span class="breakdown-label">Black Box</span>
+                </div>
+                <div class="breakdown-item">
+                    <span class="breakdown-value">${stats.standardWarnings}</span>
+                    <span class="breakdown-label">Warnings</span>
+                </div>
+            </div>
+            <a href="$link.setScreen('AdverseEvents')" class="stat-link">
+                View All Events
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Indications Card -->
+        <div class="stat-card">
+            <div class="stat-header">
+                <svg class="stat-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <span>Indications</span>
+            </div>
+            <div class="stat-main">
+                <span class="stat-value">${stats.totalIndications}</span>
+            </div>
+            <div class="stat-breakdown">
+                <div class="breakdown-item">
+                    <span class="breakdown-value">${stats.exactMatches}</span>
+                    <span class="breakdown-label">Exact Match</span>
+                </div>
+                <div class="breakdown-item">
+                    <span class="breakdown-value">${stats.nlpMatches}</span>
+                    <span class="breakdown-label">NLP Match</span>
+                </div>
+            </div>
+            <a href="$link.setScreen('Indications')" class="stat-link">
+                View All Indications
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Recently Viewed Section (User's Lookup History) -->
+    #if($hasRecentLookups)
+    <div class="recently-viewed-section">
+        <h2 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Your Recent Lookups
+        </h2>
+        <div class="activity-grid">
+            <!-- Recently Viewed Substances -->
+            #if($recentlyViewedSubstances && $recentlyViewedSubstances.size() > 0)
+            <div class="activity-card highlight-card">
+                <div class="activity-header">
+                    <h3 class="activity-title">Recently Viewed Substances</h3>
+                </div>
+                <div class="activity-list">
+                    #foreach($item in $recentlyViewedSubstances)
+                    <div class="activity-item">
+                        <div class="activity-content">
+                            <span class="activity-name">$!{item.primaryName}</span>
+                            <span class="activity-meta">$!{item.timeAgo}</span>
+                        </div>
+                        <a href="$link.setScreen('SubstanceDetail').addPathInfo('id', $item.id)" class="activity-action">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </a>
+                    </div>
+                    #end
+                </div>
+            </div>
+            #end
+
+            <!-- Recently Viewed Adverse Events -->
+            #if($recentlyViewedAdverseEvents && $recentlyViewedAdverseEvents.size() > 0)
+            <div class="activity-card highlight-card">
+                <div class="activity-header">
+                    <h3 class="activity-title">Recently Viewed Adverse Events</h3>
+                </div>
+                <div class="activity-list">
+                    #foreach($item in $recentlyViewedAdverseEvents)
+                    <div class="activity-item">
+                        <div class="activity-content">
+                            <span class="activity-name">$!{item.primaryName}</span>
+                            <span class="activity-meta">$!{item.timeAgo}</span>
+                        </div>
+                        #if($item.badge)
+                        <span class="badge $item.badgeClass">$item.badge</span>
+                        #end
+                    </div>
+                    #end
+                </div>
+            </div>
+            #end
+        </div>
+    </div>
+    #end
+
+    <!-- Recent Activity Section -->
+    <div class="activity-grid">
+        <!-- Recent Substances -->
+        <div class="activity-card">
+            <div class="activity-header">
+                <h3 class="activity-title">Recent Substances</h3>
+                <a href="$link.setScreen('Substances')" class="activity-link">View All</a>
+            </div>
+            <div class="activity-list">
+                #if($recentSubstances && $recentSubstances.size() > 0)
+                    #foreach($substance in $recentSubstances)
+                    <div class="activity-item">
+                        <div class="activity-content">
+                            <span class="activity-name">$!{substance.primaryName}</span>
+                            <span class="activity-meta">$!{substance.sourceTypeLabel}</span>
+                        </div>
+                        <a href="$link.setScreen('SubstanceDetail').addPathInfo('id', $substance.id)" class="activity-action">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </a>
+                    </div>
+                    #end
+                #else
+                    <div class="empty-state">No substances loaded yet</div>
+                #end
+            </div>
+        </div>
+
+        <!-- Recent Adverse Events -->
+        <div class="activity-card">
+            <div class="activity-header">
+                <h3 class="activity-title">Recent Adverse Events</h3>
+                <a href="$link.setScreen('AdverseEvents')" class="activity-link">View All</a>
+            </div>
+            <div class="activity-list">
+                #if($recentAdverseEvents && $recentAdverseEvents.size() > 0)
+                    #foreach($ae in $recentAdverseEvents)
+                    <div class="activity-item">
+                        <div class="activity-content">
+                            <span class="activity-name">$!{ae.meddraTerm}</span>
+                            <span class="activity-meta">$!{ae.substanceName}</span>
+                        </div>
+                        <span class="badge $ae.severityBadgeClass">$ae.severityLabel</span>
+                    </div>
+                    #end
+                #else
+                    <div class="empty-state">No adverse events loaded yet</div>
+                #end
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,114 @@
+#set($pageTitle = "SRLC Updates")
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <span class="page-subtitle">Safety Related Label Changes</span>
+            <h1 class="page-title">SRLC Updates</h1>
+        </div>
+        <div class="page-stats">
+            <span class="page-stat">$totalCount updates</span>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+        <form action="$link.setScreen('SRLC')" method="get" class="search-form">
+            <div class="search-field">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" name="search" class="search-input" placeholder="Search drug name, application number..." value="$!{searchTerm}">
+            </div>
+            <select name="year" class="filter-select">
+                <option value="all" #if($year == 'all')selected#end>All Years</option>
+                #foreach($y in $yearList)
+                <option value="$y" #if($year == $y)selected#end>$y</option>
+                #end
+            </select>
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </form>
+    </div>
+
+    <!-- Results as Cards -->
+    <div class="srlc-grid">
+        #if($srlcUpdates.isEmpty())
+        <div class="empty-state-card">
+            <div class="empty-content">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <p>No SRLC updates found matching your criteria.</p>
+            </div>
+        </div>
+        #else
+        #foreach($srlc in $srlcUpdates)
+        <div class="srlc-card">
+            <div class="srlc-card-header">
+                <div class="srlc-drug-info">
+                    <h3 class="srlc-drug-name">$!{srlc.drugName}</h3>
+                    <span class="srlc-app-number">$srlc.formattedApplicationNumber</span>
+                </div>
+                <div class="srlc-date">
+                    #if($srlc.approvalDate)
+                        $date.format('MMM d, yyyy', $srlc.approvalDate)
+                    #end
+                </div>
+            </div>
+            <div class="srlc-card-body">
+                #if($srlc.sponsor)
+                <div class="srlc-detail">
+                    <span class="srlc-label">Sponsor</span>
+                    <span class="srlc-value">$srlc.sponsor</span>
+                </div>
+                #end
+                #if($srlc.supplementType)
+                <div class="srlc-detail">
+                    <span class="srlc-label">Supplement Type</span>
+                    <span class="srlc-value">$srlc.supplementType</span>
+                </div>
+                #end
+                #if($srlc.supplementNumber)
+                <div class="srlc-detail">
+                    <span class="srlc-label">Supplement Number</span>
+                    <span class="srlc-value">$srlc.supplementNumber</span>
+                </div>
+                #end
+            </div>
+            <div class="srlc-card-footer">
+                #if($srlc.url)
+                <a href="$srlc.url" target="_blank" class="btn btn-sm btn-outline">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                    View Document
+                </a>
+                #end
+            </div>
+        </div>
+        #end
+        #end
+    </div>
+
+    <!-- Pagination -->
+    #if($totalPages > 1)
+    <div class="pagination">
+        <div class="pagination-info">
+            Showing page $currentPage of $totalPages ($totalCount total)
+        </div>
+        <div class="pagination-controls">
+            #if($currentPage > 1)
+            <a href="$link.setScreen('SRLC').addPathInfo('page', $currentPage - 1).addPathInfo('search', $searchTerm).addPathInfo('year', $year)" class="pagination-btn">Previous</a>
+            #end
+            #if($currentPage < $totalPages)
+            <a href="$link.setScreen('SRLC').addPathInfo('page', $currentPage + 1).addPathInfo('search', $searchTerm).addPathInfo('year', $year)" class="pagination-btn">Next</a>
+            #end
+        </div>
+    </div>
+    #end
+</div>

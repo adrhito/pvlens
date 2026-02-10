@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pipeline>
+    <valves>
+        <valve>org.apache.turbine.pipeline.DetermineActionValve</valve>
+        <valve>org.apache.turbine.pipeline.DetermineTargetValve</valve>
+        <valve>org.apache.turbine.pipeline.ExecutePageValve</valve>
+        <valve>org.apache.turbine.pipeline.CleanUpValve</valve>
+    </valves>
+</pipeline>

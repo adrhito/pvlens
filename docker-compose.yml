@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: pvlens-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: pvlens
+    ports:
+      - "3306:3306"
+    volumes:
+      - pvlens-mysql-data:/var/lib/mysql
+      - ./pvlens-db/src/main/resources/sql:/docker-entrypoint-initdb.d:ro
+    command: --max_allowed_packet=64M --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pvlens-mysql-data:

@@ -1,0 +1,142 @@
+#set($pageTitle = "Substances")
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <span class="page-subtitle">Drug Products Database</span>
+            <h1 class="page-title">Substances</h1>
+        </div>
+        <div class="page-stats">
+            <span class="page-stat">$totalCount total substances</span>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+        <form action="$link.setScreen('Substances')" method="get" class="search-form">
+            <div class="search-field">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" name="search" class="search-input" placeholder="Search by name, NDC code..." value="$!{searchTerm}">
+            </div>
+            <select name="sourceType" class="filter-select">
+                <option value="all" #if($sourceType == 'all')selected#end>All Types</option>
+                <option value="prescription" #if($sourceType == 'prescription')selected#end>Prescription</option>
+                <option value="otc" #if($sourceType == 'otc')selected#end>OTC</option>
+                <option value="other" #if($sourceType == 'other')selected#end>Other</option>
+            </select>
+            <select name="sortBy" class="filter-select">
+                <option value="name" #if($sortBy == 'name')selected#end>Sort by Name</option>
+                <option value="type" #if($sortBy == 'type')selected#end>Sort by Type</option>
+                <option value="sponsor" #if($sortBy == 'sponsor')selected#end>Sort by Sponsor</option>
+                <option value="date" #if($sortBy == 'date')selected#end>Sort by Date</option>
+            </select>
+            <select name="sortOrder" class="filter-select">
+                <option value="asc" #if($sortOrder == 'asc')selected#end>Ascending</option>
+                <option value="desc" #if($sortOrder == 'desc')selected#end>Descending</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+
+    <!-- Results Table -->
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Drug Name</th>
+                    <th>Type</th>
+                    <th>Sponsor</th>
+                    <th>Approval Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                #if($substances.isEmpty())
+                <tr>
+                    <td colspan="5" class="empty-state">
+                        <div class="empty-content">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="M21 21l-4.35-4.35"/>
+                            </svg>
+                            <p>No substances found. Load data using the backend pipeline.</p>
+                        </div>
+                    </td>
+                </tr>
+                #else
+                #foreach($substance in $substances)
+                <tr>
+                    <td>
+                        <div class="cell-main">
+                            <a href="$link.setScreen('SubstanceDetail').addPathInfo('id', $substance.id)" class="substance-link">
+                                $!{substance.primaryName}
+                            </a>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge $substance.sourceTypeBadgeClass">$substance.sourceTypeLabel</span>
+                    </td>
+                    <td>$!{substance.sponsor}</td>
+                    <td>
+                        #if($substance.approvalDate)
+                            $date.format('MMM d, yyyy', $substance.approvalDate)
+                        #else
+                            -
+                        #end
+                    </td>
+                    <td>
+                        <a href="$link.setScreen('SubstanceDetail').addPathInfo('id', $substance.id)" class="btn btn-sm btn-outline">
+                            View Details
+                        </a>
+                    </td>
+                </tr>
+                #end
+                #end
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    #if($totalPages > 1)
+    <div class="pagination">
+        <div class="pagination-info">
+            Showing page $currentPage of $totalPages ($totalCount total)
+        </div>
+        <div class="pagination-controls">
+            #if($currentPage > 1)
+            <a href="$link.setScreen('Substances').addPathInfo('page', 1).addPathInfo('search', $searchTerm).addPathInfo('sourceType', $sourceType).addPathInfo('sortBy', $sortBy).addPathInfo('sortOrder', $sortOrder)" class="pagination-btn">
+                First
+            </a>
+            <a href="$link.setScreen('Substances').addPathInfo('page', $currentPage - 1).addPathInfo('search', $searchTerm).addPathInfo('sourceType', $sourceType).addPathInfo('sortBy', $sortBy).addPathInfo('sortOrder', $sortOrder)" class="pagination-btn">
+                Previous
+            </a>
+            #end
+
+            #set($startPage = $currentPage - 2)
+            #if($startPage < 1)#set($startPage = 1)#end
+            #set($endPage = $startPage + 4)
+            #if($endPage > $totalPages)#set($endPage = $totalPages)#end
+
+            #foreach($i in [$startPage..$endPage])
+            <a href="$link.setScreen('Substances').addPathInfo('page', $i).addPathInfo('search', $searchTerm).addPathInfo('sourceType', $sourceType).addPathInfo('sortBy', $sortBy).addPathInfo('sortOrder', $sortOrder)"
+               class="pagination-btn #if($i == $currentPage)active#end">
+                $i
+            </a>
+            #end
+
+            #if($currentPage < $totalPages)
+            <a href="$link.setScreen('Substances').addPathInfo('page', $currentPage + 1).addPathInfo('search', $searchTerm).addPathInfo('sourceType', $sourceType).addPathInfo('sortBy', $sortBy).addPathInfo('sortOrder', $sortOrder)" class="pagination-btn">
+                Next
+            </a>
+            <a href="$link.setScreen('Substances').addPathInfo('page', $totalPages).addPathInfo('search', $searchTerm).addPathInfo('sourceType', $sourceType).addPathInfo('sortBy', $sortBy).addPathInfo('sortOrder', $sortOrder)" class="pagination-btn">
+                Last
+            </a>
+            #end
+        </div>
+    </div>
+    #end
+</div>

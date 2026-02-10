@@ -1,0 +1,224 @@
+#set($pageTitle = $substance.primaryName)
+
+<div class="page-container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="$link.setScreen('Substances')" class="breadcrumb-link">Substances</a>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+        </svg>
+        <span class="breadcrumb-current">$!{substance.primaryName}</span>
+    </nav>
+
+    <!-- Drug Header -->
+    <div class="detail-header">
+        <div class="detail-title-section">
+            <span class="badge $substance.sourceTypeBadgeClass">$substance.sourceTypeLabel</span>
+            <h1 class="detail-title">$!{substance.primaryName}</h1>
+            #if($substance.sponsor)
+            <span class="detail-subtitle">by $substance.sponsor</span>
+            #end
+        </div>
+        <div class="detail-meta">
+            #if($substance.approvalDate)
+            <div class="meta-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span>Approved: $date.format('MMM d, yyyy', $substance.approvalDate)</span>
+            </div>
+            #end
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="detail-stats">
+        <div class="detail-stat-card">
+            <div class="detail-stat-value">$adverseEventsCount</div>
+            <div class="detail-stat-label">Adverse Events</div>
+        </div>
+        <div class="detail-stat-card">
+            <div class="detail-stat-value">$indicationsCount</div>
+            <div class="detail-stat-label">Indications</div>
+        </div>
+        <div class="detail-stat-card">
+            <div class="detail-stat-value">$termCodesCount</div>
+            <div class="detail-stat-label">Term Codes</div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="detail-tabs">
+        <button class="tab-btn active" data-tab="adverse-events">Adverse Events</button>
+        <button class="tab-btn" data-tab="indications">Indications</button>
+        <button class="tab-btn" data-tab="terminology">Terminology Codes</button>
+    </div>
+
+    <!-- Tab Content: Adverse Events -->
+    <div class="tab-content active" id="adverse-events">
+        <div class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>MedDRA Term</th>
+                        <th>Code</th>
+                        <th>Severity</th>
+                        <th>Match Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    #if($adverseEvents.isEmpty())
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <p>No adverse events recorded for this substance.</p>
+                        </td>
+                    </tr>
+                    #else
+                    #foreach($ae in $adverseEvents)
+                    <tr>
+                        <td>
+                            <div class="cell-main">$!{ae.meddraTerm}</div>
+                            <div class="cell-sub">$!{ae.meddraTermType}</div>
+                        </td>
+                        <td><code class="code-text">$!{ae.meddraCode}</code></td>
+                        <td><span class="badge $ae.severityBadgeClass">$ae.severityLabel</span></td>
+                        <td><span class="badge $ae.matchTypeBadgeClass">$ae.matchTypeLabel</span></td>
+                    </tr>
+                    #end
+                    #end
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab Content: Indications -->
+    <div class="tab-content" id="indications">
+        <div class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Indication Term</th>
+                        <th>Code</th>
+                        <th>Match Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    #if($indications.isEmpty())
+                    <tr>
+                        <td colspan="3" class="empty-state">
+                            <p>No indications recorded for this substance.</p>
+                        </td>
+                    </tr>
+                    #else
+                    #foreach($ind in $indications)
+                    <tr>
+                        <td>
+                            <div class="cell-main">$!{ind.indicationTerm}</div>
+                            <div class="cell-sub">$!{ind.indicationTermType}</div>
+                        </td>
+                        <td><code class="code-text">$!{ind.indicationCode}</code></td>
+                        <td><span class="badge $ind.matchTypeBadgeClass">$ind.matchTypeLabel</span></td>
+                    </tr>
+                    #end
+                    #end
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab Content: Terminology -->
+    <div class="tab-content" id="terminology">
+        <div class="terminology-grid">
+            <!-- RxNorm Codes -->
+            <div class="terminology-section">
+                <h3 class="terminology-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/>
+                    </svg>
+                    RxNorm
+                </h3>
+                <div class="code-list">
+                    #if($rxnormCodes.isEmpty())
+                    <span class="no-codes">No RxNorm codes</span>
+                    #else
+                    #foreach($code in $rxnormCodes)
+                    <div class="code-item">
+                        <code class="code-text">$code.code</code>
+                        <span class="code-name">$!{code.name}</span>
+                    </div>
+                    #end
+                    #end
+                </div>
+            </div>
+
+            <!-- SNOMED Codes -->
+            <div class="terminology-section">
+                <h3 class="terminology-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                    SNOMED CT
+                </h3>
+                <div class="code-list">
+                    #if($snomedCodes.isEmpty())
+                    <span class="no-codes">No SNOMED codes</span>
+                    #else
+                    #foreach($code in $snomedCodes)
+                    <div class="code-item">
+                        <code class="code-text">$code.code</code>
+                        <span class="code-name">$!{code.name}</span>
+                    </div>
+                    #end
+                    #end
+                </div>
+            </div>
+
+            <!-- ATC Codes -->
+            <div class="terminology-section">
+                <h3 class="terminology-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    </svg>
+                    ATC
+                </h3>
+                <div class="code-list">
+                    #if($atcCodes.isEmpty())
+                    <span class="no-codes">No ATC codes</span>
+                    #else
+                    #foreach($code in $atcCodes)
+                    <div class="code-item">
+                        <code class="code-text">$code.code</code>
+                        <span class="code-name">$!{code.name}</span>
+                    </div>
+                    #end
+                    #end
+                </div>
+            </div>
+
+            <!-- NDC Codes -->
+            <div class="terminology-section">
+                <h3 class="terminology-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    </svg>
+                    NDC
+                </h3>
+                <div class="code-list">
+                    #if($ndcCodes.isEmpty())
+                    <span class="no-codes">No NDC codes</span>
+                    #else
+                    #foreach($code in $ndcCodes)
+                    <div class="code-item">
+                        <code class="code-text">$code.code</code>
+                        <span class="code-name">$!{code.name}</span>
+                    </div>
+                    #end
+                    #end
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

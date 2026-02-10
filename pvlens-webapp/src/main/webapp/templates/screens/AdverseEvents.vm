@@ -1,0 +1,137 @@
+#set($pageTitle = "Adverse Events")
+
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <span class="page-subtitle">Safety Information</span>
+            <h1 class="page-title">Adverse Events</h1>
+        </div>
+        <div class="page-stats">
+            <span class="page-stat">$totalCount adverse events</span>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+        <form action="$link.setScreen('AdverseEvents')" method="get" class="search-form">
+            <div class="search-field">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" name="search" class="search-input" placeholder="Search MedDRA terms..." value="$!{searchTerm}">
+            </div>
+            <select name="substanceId" class="filter-select">
+                #foreach($item in $substanceList)
+                <option value="$item.id" #if($substanceId == $item.id)selected#end>$item.name</option>
+                #end
+            </select>
+            <select name="severity" class="filter-select">
+                <option value="all" #if($severity == 'all')selected#end>All Severity</option>
+                <option value="blackbox" #if($severity == 'blackbox')selected#end>Black Box</option>
+                <option value="warning" #if($severity == 'warning')selected#end>Warning</option>
+            </select>
+            <select name="matchType" class="filter-select">
+                <option value="all" #if($matchType == 'all')selected#end>All Match Types</option>
+                <option value="exact" #if($matchType == 'exact')selected#end>Exact Match</option>
+                <option value="nlp" #if($matchType == 'nlp')selected#end>NLP Match</option>
+            </select>
+            <select name="sortBy" class="filter-select">
+                <option value="term" #if($sortBy == 'term')selected#end>Sort by Term</option>
+                <option value="code" #if($sortBy == 'code')selected#end>Sort by Code</option>
+                <option value="substance" #if($sortBy == 'substance')selected#end>Sort by Substance</option>
+                <option value="date" #if($sortBy == 'date')selected#end>Sort by Date</option>
+            </select>
+            <select name="sortOrder" class="filter-select">
+                <option value="asc" #if($sortOrder == 'asc')selected#end>Ascending</option>
+                <option value="desc" #if($sortOrder == 'desc')selected#end>Descending</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </form>
+    </div>
+
+    <!-- Results Table -->
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>MedDRA Term</th>
+                    <th>Code</th>
+                    <th>Substance</th>
+                    <th>Severity</th>
+                    <th>Match Type</th>
+                    <th>Label Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                #if($adverseEvents.isEmpty())
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <div class="empty-content">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            </svg>
+                            <p>No adverse events found. Load data using the backend pipeline.</p>
+                        </div>
+                    </td>
+                </tr>
+                #else
+                #foreach($ae in $adverseEvents)
+                <tr>
+                    <td>
+                        <div class="cell-main">$!{ae.meddraTerm}</div>
+                        <div class="cell-sub">$!{ae.meddraTermType}</div>
+                    </td>
+                    <td><code class="code-text">$!{ae.meddraCode}</code></td>
+                    <td>
+                        <a href="$link.setScreen('SubstanceDetail').addPathInfo('id', $ae.substanceId)" class="substance-link">
+                            $!{ae.substanceName}
+                        </a>
+                    </td>
+                    <td><span class="badge $ae.severityBadgeClass">$ae.severityLabel</span></td>
+                    <td><span class="badge $ae.matchTypeBadgeClass">$ae.matchTypeLabel</span></td>
+                    <td>
+                        #if($ae.labelDate)
+                            $date.format('MMM d, yyyy', $ae.labelDate)
+                        #else
+                            -
+                        #end
+                    </td>
+                </tr>
+                #end
+                #end
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    #if($totalPages > 1)
+    <div class="pagination">
+        <div class="pagination-info">
+            Showing page $currentPage of $totalPages ($totalCount total)
+        </div>
+        <div class="pagination-controls">
+            #if($currentPage > 1)
+            <a href="$link.setScreen('AdverseEvents').addPathInfo('page', 1).addPathInfo('search', $searchTerm).addPathInfo('substanceId', $substanceId).addPathInfo('severity', $severity).addPathInfo('matchType', $matchType).addPathInfo('sortBy', $sortBy).addPathInfo('sortOrder', $sortOrder)" class="pagination-btn">First</a>
+            <a href="$link.setScreen('AdverseEvents').addPathInfo('page', $currentPage - 1).addPathInfo('search', $searchTerm).addPathInfo('substanceId', $substanceId).addPathInfo('severity', $severity).addPathInfo('matchType', $matchType).addPathInfo('sortBy', $sortBy).addPathInfo('sortOrder', $sortOrder)" class="pagination-btn">Previous</a>
+            #end
+
+            #set($startPage = $currentPage - 2)
+            #if($startPage < 1)#set($startPage = 1)#end
+            #set($endPage = $startPage + 4)
+            #if($endPage > $totalPages)#set($endPage = $totalPages)#end
+
+            #foreach($i in [$startPage..$endPage])
+            <a href="$link.setScreen('AdverseEvents').addPathInfo('page', $i).addPathInfo('search', $searchTerm).addPathInfo('substanceId', $substanceId).addPathInfo('severity', $severity).addPathInfo('matchType', $matchType).addPathInfo('sortBy', $sortBy).addPathInfo('sortOrder', $sortOrder)"
+               class="pagination-btn #if($i == $currentPage)active#end">$i</a>
+            #end
+
+            #if($currentPage < $totalPages)
+            <a href="$link.setScreen('AdverseEvents').addPathInfo('page', $currentPage + 1).addPathInfo('search', $searchTerm).addPathInfo('substanceId', $substanceId).addPathInfo('severity', $severity).addPathInfo('matchType', $matchType).addPathInfo('sortBy', $sortBy).addPathInfo('sortOrder', $sortOrder)" class="pagination-btn">Next</a>
+            <a href="$link.setScreen('AdverseEvents').addPathInfo('page', $totalPages).addPathInfo('search', $searchTerm).addPathInfo('substanceId', $substanceId).addPathInfo('severity', $severity).addPathInfo('matchType', $matchType).addPathInfo('sortBy', $sortBy).addPathInfo('sortOrder', $sortOrder)" class="pagination-btn">Last</a>
+            #end
+        </div>
+    </div>
+    #end
+</div>
