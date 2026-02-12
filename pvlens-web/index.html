@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PVLens - Drug Safety Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/pvlens.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                    <span class="logo-text">PVLens</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="overview">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="nav-item" data-page="substances">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/>
+                        <path d="M9 3v4"/><path d="M15 3v4"/>
+                        <path d="M9 14h6"/><path d="M9 18h6"/>
+                    </svg>
+                    <span>Substances</span>
+                </a>
+                <a href="#" class="nav-item" data-page="adverse-events">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span>Adverse Events</span>
+                </a>
+                <a href="#" class="nav-item" data-page="indications">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <span>Indications</span>
+                </a>
+                <a href="#" class="nav-item" data-page="srlc">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span>SRLC Updates</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="db-status" id="db-status">
+                    <span class="status-dot"></span>
+                    <span>Checking connection...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Overview Page -->
+            <div id="page-overview" class="page active">
+                <div class="page-header">
+                    <h1>Dashboard Overview</h1>
+                    <p class="page-subtitle">Drug Safety Data at a Glance</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-substances">-</span>
+                            <span class="stat-label">Total Substances</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-adverse-events">-</span>
+                            <span class="stat-label">Adverse Events</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-indications">-</span>
+                            <span class="stat-label">Indications</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-srlc">-</span>
+                            <span class="stat-label">SRLC Updates</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Substances</h3>
+                            <a href="#" class="link" data-page="substances">View All</a>
+                        </div>
+                        <div class="card-content">
+                            <div id="recent-substances" class="list-container">
+                                <div class="loading">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Adverse Events</h3>
+                            <a href="#" class="link" data-page="adverse-events">View All</a>
+                        </div>
+                        <div class="card-content">
+                            <div id="recent-adverse-events" class="list-container">
+                                <div class="loading">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Substances Page -->
+            <div id="page-substances" class="page">
+                <div class="page-header">
+                    <h1>Substances</h1>
+                    <p class="page-subtitle">Drug Products Database</p>
+                </div>
+                <div class="filters-bar">
+                    <input type="text" id="substance-search" class="search-input" placeholder="Search substances...">
+                    <select id="substance-type" class="filter-select">
+                        <option value="all">All Types</option>
+                        <option value="prescription">Prescription</option>
+                        <option value="otc">OTC</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Drug Name</th>
+                                <th>Type</th>
+                                <th>Sponsor</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="substances-table">
+                            <tr><td colspan="4" class="loading">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="substances-pagination" class="pagination"></div>
+            </div>
+
+            <!-- Adverse Events Page -->
+            <div id="page-adverse-events" class="page">
+                <div class="page-header">
+                    <h1>Adverse Events</h1>
+                    <p class="page-subtitle">Safety-related adverse events from drug labels</p>
+                </div>
+                <div class="filters-bar">
+                    <input type="text" id="ae-search" class="search-input" placeholder="Search adverse events...">
+                    <select id="ae-severity" class="filter-select">
+                        <option value="all">All Severities</option>
+                        <option value="blackbox">Black Box Warning</option>
+                        <option value="warning">Warning</option>
+                        <option value="standard">Standard</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>MedDRA Term</th>
+                                <th>Substance</th>
+                                <th>Severity</th>
+                                <th>Match Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adverse-events-table">
+                            <tr><td colspan="4" class="loading">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="ae-pagination" class="pagination"></div>
+            </div>
+
+            <!-- Indications Page -->
+            <div id="page-indications" class="page">
+                <div class="page-header">
+                    <h1>Indications</h1>
+                    <p class="page-subtitle">Drug indications from product labels</p>
+                </div>
+                <div class="filters-bar">
+                    <input type="text" id="ind-search" class="search-input" placeholder="Search indications...">
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>MedDRA Term</th>
+                                <th>Substance</th>
+                                <th>Match Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="indications-table">
+                            <tr><td colspan="3" class="loading">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="ind-pagination" class="pagination"></div>
+            </div>
+
+            <!-- SRLC Page -->
+            <div id="page-srlc" class="page">
+                <div class="page-header">
+                    <h1>SRLC Updates</h1>
+                    <p class="page-subtitle">Safety-Related Labeling Changes from FDA</p>
+                </div>
+                <div class="filters-bar">
+                    <input type="text" id="srlc-search" class="search-input" placeholder="Search by drug name...">
+                    <select id="srlc-year" class="filter-select">
+                        <option value="all">All Years</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Drug Name</th>
+                                <th>Active Ingredient</th>
+                                <th>Application #</th>
+                                <th>Supplement Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="srlc-table">
+                            <tr><td colspan="5" class="loading">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="srlc-pagination" class="pagination"></div>
+            </div>
+
+            <!-- Substance Detail Modal -->
+            <div id="substance-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="modal-title">Substance Details</h2>
+                        <button class="modal-close">&times;</button>
+                    </div>
+                    <div class="modal-body" id="modal-body">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
