@@ -5,8 +5,7 @@ const PAGE_SIZE = 20;
 let currentPage = {
     substances: 1,
     adverseEvents: 1,
-    indications: 1,
-    srlc: 1
+    indications: 1
 };
 
 // Initialize app
@@ -18,11 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Navigation
 function initNavigation() {
-    document.querySelectorAll('.nav-item, .link[data-page]').forEach(link => {
+    // Nav links in header
+    document.querySelectorAll('.nav-link, .stat-link, .activity-link, .logo').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const page = link.dataset.page;
-            navigateTo(page);
+            if (page) navigateTo(page);
         });
     });
 
@@ -38,7 +38,7 @@ function initNavigation() {
 
 function navigateTo(page) {
     // Update nav
-    document.querySelectorAll('.nav-item').forEach(item => {
+    document.querySelectorAll('.nav-link').forEach(item => {
         item.classList.toggle('active', item.dataset.page === page);
     });
 
@@ -52,7 +52,6 @@ function navigateTo(page) {
         case 'substances': loadSubstances(); break;
         case 'adverse-events': loadAdverseEvents(); break;
         case 'indications': loadIndications(); break;
-        case 'srlc': loadSrlc(); break;
     }
 }
 
@@ -82,16 +81,6 @@ function setupFilters() {
         currentPage.indications = 1;
         loadIndications();
     }, 300));
-
-    // SRLC filters
-    document.getElementById('srlc-search')?.addEventListener('input', debounce(() => {
-        currentPage.srlc = 1;
-        loadSrlc();
-    }, 300));
-    document.getElementById('srlc-year')?.addEventListener('change', () => {
-        currentPage.srlc = 1;
-        loadSrlc();
-    });
 }
 
 // Check Supabase connection
@@ -122,17 +111,31 @@ async function checkConnection() {
 async function loadOverview() {
     try {
         // Load stats
-        const [substances, adverseEvents, indications, srlc] = await Promise.all([
+        const [substances, adverseEvents, indications] = await Promise.all([
             window.db.from('substance').select('*', { count: 'exact', head: true }),
             window.db.from('product_ae').select('*', { count: 'exact', head: true }),
-            window.db.from('product_ind').select('*', { count: 'exact', head: true }),
-            window.db.from('srlc').select('*', { count: 'exact', head: true })
+            window.db.from('product_ind').select('*', { count: 'exact', head: true })
         ]);
 
         document.getElementById('stat-substances').textContent = formatNumber(substances.count || 0);
         document.getElementById('stat-adverse-events').textContent = formatNumber(adverseEvents.count || 0);
         document.getElementById('stat-indications').textContent = formatNumber(indications.count || 0);
-        document.getElementById('stat-srlc').textContent = formatNumber(srlc.count || 0);
+
+        // Load breakdown counts
+        const [blackbox, warnings, exactMatch] = await Promise.all([
+            window.db.from('product_ae').select('*', { count: 'exact', head: true }).eq('blackbox', true),
+            window.db.from('product_ae').select('*', { count: 'exact', head: true }).eq('warning', true),
+            window.db.from('product_ind').select('*', { count: 'exact', head: true }).eq('exact_match', true)
+        ]);
+
+        document.getElementById('stat-blackbox').textContent = formatNumber(blackbox.count || 0);
+        document.getElementById('stat-warnings').textContent = formatNumber(warnings.count || 0);
+        document.getElementById('stat-exact').textContent = formatNumber(exactMatch.count || 0);
+        document.getElementById('stat-nlp').textContent = formatNumber((indications.count || 0) - (exactMatch.count || 0));
+
+        // Placeholder for prescription/OTC counts (would need source_type join)
+        document.getElementById('stat-prescription').textContent = '-';
+        document.getElementById('stat-otc').textContent = '-';
 
         // Load recent substances
         const { data: recentSubstances } = await window.db
@@ -175,9 +178,16 @@ function renderRecentSubstances(substances) {
     container.innerHTML = substances.map(s => {
         const name = getSubstanceName(s);
         return `
-            <div class="list-item" onclick="showSubstanceDetail(${s.id})">
-                <span class="list-item-name">${escapeHtml(name)}</span>
-                <span class="list-item-meta">ID: ${s.id}</span>
+            <div class="activity-item" onclick="showSubstanceDetail(${s.id})">
+                <div class="activity-content">
+                    <span class="activity-name">${escapeHtml(name)}</span>
+                    <span class="activity-meta">ID: ${s.id}</span>
+                </div>
+                <a href="#" class="activity-action" onclick="showSubstanceDetail(${s.id}); return false;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </a>
             </div>
         `;
     }).join('');
@@ -193,10 +203,13 @@ function renderRecentAdverseEvents(events) {
     container.innerHTML = events.map(ae => {
         const term = ae.meddra?.meddra_term || 'Unknown';
         const severity = ae.blackbox ? 'Black Box' : ae.warning ? 'Warning' : 'Standard';
-        const badgeClass = ae.blackbox ? 'badge-red' : ae.warning ? 'badge-orange' : 'badge-blue';
+        const badgeClass = ae.blackbox ? 'badge-blackbox' : ae.warning ? 'badge-warning' : 'badge-standard';
         return `
-            <div class="list-item">
-                <span class="list-item-name">${escapeHtml(term)}</span>
+            <div class="activity-item">
+                <div class="activity-content">
+                    <span class="activity-name">${escapeHtml(term)}</span>
+                    <span class="activity-meta">Substance #${ae.product_id}</span>
+                </div>
                 <span class="badge ${badgeClass}">${severity}</span>
             </div>
         `;
@@ -224,6 +237,8 @@ async function loadSubstances() {
         const { data, count, error } = await query;
         if (error) throw error;
 
+        document.getElementById('substances-count').textContent = `${formatNumber(count || 0)} total substances`;
+
         if (!data?.length) {
             tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No substances found</td></tr>';
             return;
@@ -233,12 +248,20 @@ async function loadSubstances() {
             const name = getSubstanceName(s);
             const sponsor = s.spl_srcfile?.[0]?.nda_sponsor || '-';
             const sourceType = s.spl_srcfile?.[0]?.source_type?.source_type || '-';
+            const badgeClass = sourceType === 'PRESCRIPTION' ? 'badge-prescription' :
+                              sourceType === 'OTC' ? 'badge-otc' : 'badge-other';
             return `
                 <tr>
-                    <td><a href="#" onclick="showSubstanceDetail(${s.id}); return false;">${escapeHtml(name)}</a></td>
-                    <td><span class="badge badge-blue">${escapeHtml(sourceType)}</span></td>
+                    <td>
+                        <div class="cell-main">
+                            <a href="#" onclick="showSubstanceDetail(${s.id}); return false;" class="substance-link">${escapeHtml(name)}</a>
+                        </div>
+                    </td>
+                    <td><span class="badge ${badgeClass}">${escapeHtml(sourceType)}</span></td>
                     <td>${escapeHtml(sponsor)}</td>
-                    <td><button class="btn btn-outline" onclick="showSubstanceDetail(${s.id})">View</button></td>
+                    <td>
+                        <a href="#" onclick="showSubstanceDetail(${s.id}); return false;" class="btn btn-sm btn-outline">View Details</a>
+                    </td>
                 </tr>
             `;
         }).join('');
@@ -282,6 +305,8 @@ async function loadAdverseEvents() {
         const { data, count, error } = await query;
         if (error) throw error;
 
+        document.getElementById('ae-count').textContent = `${formatNumber(count || 0)} total events`;
+
         if (!data?.length) {
             tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No adverse events found</td></tr>';
             return;
@@ -290,14 +315,15 @@ async function loadAdverseEvents() {
         tbody.innerHTML = data.map(ae => {
             const term = ae.meddra?.meddra_term || 'Unknown';
             const severityLabel = ae.blackbox ? 'Black Box' : ae.warning ? 'Warning' : 'Standard';
-            const severityClass = ae.blackbox ? 'badge-red' : ae.warning ? 'badge-orange' : 'badge-blue';
+            const severityClass = ae.blackbox ? 'badge-blackbox' : ae.warning ? 'badge-warning' : 'badge-standard';
             const matchType = ae.exact_match ? 'Exact' : 'NLP';
+            const matchClass = ae.exact_match ? 'badge-exact' : 'badge-nlp';
             return `
                 <tr>
                     <td>${escapeHtml(term)}</td>
                     <td>Substance #${ae.product_id}</td>
                     <td><span class="badge ${severityClass}">${severityLabel}</span></td>
-                    <td><span class="badge badge-${ae.exact_match ? 'green' : 'purple'}">${matchType}</span></td>
+                    <td><span class="badge ${matchClass}">${matchType}</span></td>
                 </tr>
             `;
         }).join('');
@@ -333,6 +359,8 @@ async function loadIndications() {
 
         if (error) throw error;
 
+        document.getElementById('ind-count').textContent = `${formatNumber(count || 0)} total indications`;
+
         if (!data?.length) {
             tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No indications found</td></tr>';
             return;
@@ -341,11 +369,12 @@ async function loadIndications() {
         tbody.innerHTML = data.map(ind => {
             const term = ind.meddra?.meddra_term || 'Unknown';
             const matchType = ind.exact_match ? 'Exact' : 'NLP';
+            const matchClass = ind.exact_match ? 'badge-exact' : 'badge-nlp';
             return `
                 <tr>
                     <td>${escapeHtml(term)}</td>
                     <td>Substance #${ind.product_id}</td>
-                    <td><span class="badge badge-${ind.exact_match ? 'green' : 'purple'}">${matchType}</span></td>
+                    <td><span class="badge ${matchClass}">${matchType}</span></td>
                 </tr>
             `;
         }).join('');
@@ -358,59 +387,6 @@ async function loadIndications() {
     } catch (err) {
         console.error('Error loading indications:', err);
         tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Error loading data</td></tr>';
-    }
-}
-
-// Load SRLC
-async function loadSrlc() {
-    const search = document.getElementById('srlc-search')?.value || '';
-    const year = document.getElementById('srlc-year')?.value || 'all';
-    const tbody = document.getElementById('srlc-table');
-
-    tbody.innerHTML = '<tr><td colspan="5" class="loading">Loading...</td></tr>';
-
-    try {
-        let query = window.db
-            .from('srlc')
-            .select('*', { count: 'exact' })
-            .order('supplement_date', { ascending: false })
-            .range((currentPage.srlc - 1) * PAGE_SIZE, currentPage.srlc * PAGE_SIZE - 1);
-
-        if (search) {
-            query = query.or(`drug_name.ilike.%${search}%,active_ingredient.ilike.%${search}%`);
-        }
-
-        const { data, count, error } = await query;
-        if (error) throw error;
-
-        if (!data?.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No SRLC updates found</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = data.map(s => {
-            const date = s.supplement_date ? new Date(s.supplement_date).toLocaleDateString() : '-';
-            return `
-                <tr>
-                    <td>${escapeHtml(s.drug_name || '-')}</td>
-                    <td>${escapeHtml(s.active_ingredient || '-')}</td>
-                    <td>NDA ${String(s.application_number).padStart(6, '0')}</td>
-                    <td>${date}</td>
-                    <td>
-                        ${s.url ? `<a href="${escapeHtml(s.url)}" target="_blank" class="btn btn-outline">FDA Link</a>` : '-'}
-                    </td>
-                </tr>
-            `;
-        }).join('');
-
-        renderPagination('srlc-pagination', count, currentPage.srlc, (page) => {
-            currentPage.srlc = page;
-            loadSrlc();
-        });
-
-    } catch (err) {
-        console.error('Error loading SRLC:', err);
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Error loading data</td></tr>';
     }
 }
 
@@ -455,11 +431,11 @@ async function showSubstanceDetail(id) {
             </div>
             <div class="detail-section">
                 <h4>Source Type</h4>
-                <div class="detail-value"><span class="badge badge-blue">${escapeHtml(sourceType)}</span></div>
+                <div class="detail-value"><span class="badge badge-prescription">${escapeHtml(sourceType)}</span></div>
             </div>
             <div class="detail-section">
                 <h4>NDC Codes</h4>
-                <div class="detail-value">${ndcCodes.length ? ndcCodes.map(c => `<span class="badge badge-purple">${escapeHtml(c)}</span>`).join(' ') : 'None'}</div>
+                <div class="detail-value">${ndcCodes.length ? ndcCodes.map(c => `<span class="badge badge-ndc">${escapeHtml(c)}</span>`).join(' ') : 'None'}</div>
             </div>
             <div class="detail-section">
                 <h4>Adverse Events</h4>
@@ -503,16 +479,31 @@ function renderPagination(containerId, total, current, onPageChange) {
         return;
     }
 
-    let html = '';
-    html += `<button ${current === 1 ? 'disabled' : ''} onclick="(${onPageChange})(${current - 1})">Prev</button>`;
+    let html = '<div class="pagination-controls">';
 
-    for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-        html += `<button class="${i === current ? 'active' : ''}" onclick="(${onPageChange})(${i})">${i}</button>`;
+    if (current > 1) {
+        html += `<button class="pagination-btn" onclick="window.paginationHandlers['${containerId}'](${current - 1})">Previous</button>`;
     }
 
-    html += `<button ${current === totalPages ? 'disabled' : ''} onclick="(${onPageChange})(${current + 1})">Next</button>`;
+    const startPage = Math.max(1, current - 2);
+    const endPage = Math.min(totalPages, startPage + 4);
+
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="pagination-btn ${i === current ? 'active' : ''}" onclick="window.paginationHandlers['${containerId}'](${i})">${i}</button>`;
+    }
+
+    if (current < totalPages) {
+        html += `<button class="pagination-btn" onclick="window.paginationHandlers['${containerId}'](${current + 1})">Next</button>`;
+    }
+
+    html += '</div>';
+    html += `<div class="pagination-info">Page ${current} of ${totalPages}</div>`;
 
     container.innerHTML = html;
+
+    // Store handler globally
+    window.paginationHandlers = window.paginationHandlers || {};
+    window.paginationHandlers[containerId] = onPageChange;
 }
 
 function formatNumber(num) {
